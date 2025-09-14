@@ -96,16 +96,7 @@ target_compile_definitions(Noob_Tools PRIVATE
 # Feature defines for conditional compilation in code
 if (USE_SIGNALSMITH)
   target_compile_definitions(Noob_Tools PRIVATE USE_SIGNALSMITH=1)
-  # signalsmith-stretch.hpp lives at repo root; add that to include path
-  if (TARGET signalsmith_stretch)
-    # FetchContent_MakeAvailable creates an interface target in some repos; if not, include by source dir
-    # No target is exported here, so include by source dir variable
-    # CMake defines <name>_SOURCE_DIR where <name> is the declaration name
-    # Using a generator expression fallback if variable is not set would be overkill; use explicit variable
-  endif()
-  # Access the populated source dir
-  get_property(_known GLOBAL PROPERTY FETCHCONTENT_SOURCE_DIR_SIGNALS MISSING_VARIABLES)
-  # Best-effort include path: use the variable CMake defines for this content
+  # Add include path to fetched repo (header-only)
   if (DEFINED signalsmith_stretch_SOURCE_DIR)
     target_include_directories(Noob_Tools PRIVATE ${signalsmith_stretch_SOURCE_DIR})
   endif()
