@@ -38,6 +38,8 @@ private:
     juce::TextButton btnTap { "Tap Slice" };
     juce::ToggleButton btnLoop { "Loop" };
     juce::ToggleButton btnSnap { "Snap Loop" };
+    juce::ToggleButton btnEdit { "Edit Mode" };
+    juce::ToggleButton btnQuantize { "Quantize" };
     juce::TextButton btnExportCsv { "Export CSV" };
     juce::TextButton btnExportWavs { "Export WAVs" };
     juce::ToggleButton btnNormalize { "Normalize" };
@@ -50,6 +52,7 @@ private:
     juce::Rectangle<int> lastWaveRect;
     bool draggingLoop { false }; float dragStartNorm { 0.f }; float dragEndNorm { 1.f };
     juce::Viewport sliceViewport; std::unique_ptr<SliceListComponent> sliceList;
+    bool editMode { false };
     // Waveform view state
     float zoom { 1.0f }; // 1 = full, >1 zoomed in
     float offset { 0.0f }; // 0..1 start position when zoomed

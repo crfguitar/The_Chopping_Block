@@ -183,9 +183,15 @@ NoobToolsAudioProcessorEditor::NoobToolsAudioProcessorEditor (NoobToolsAudioProc
         padButtons[i].setColour (juce::TextButton::textColourOffId, juce::Colours::white);
         padButtons[i].setTooltip ("Pad " + juce::String (i + 1) + " — key '" + keyMap.substring (i, i + 1) + "'");
         padButtons[i].onClick = [this, i] {
-            juce::MidiMessage m = juce::MidiMessage::noteOn (1, 36 + i, (juce::uint8) 100); juce::MidiBuffer buf; buf.addEvent (m, 0);
-            auto* proc = dynamic_cast<NoobToolsAudioProcessor*>(getAudioProcessor());
-            if (proc != nullptr) { juce::AudioBuffer<float> scratch; scratch.setSize (2, 128, false, false, true); proc->processBlock (scratch, buf); }
+            int midiNote = 36 + i;
+            if (editMode) {
+                processor.getEngine().createUserSliceAtCurrent (midiNote, btnQuantize.getToggleState());
+                repaint();
+            } else {
+                juce::MidiMessage m = juce::MidiMessage::noteOn (1, midiNote, (juce::uint8) 100); juce::MidiBuffer buf; buf.addEvent (m, 0);
+                auto* proc = dynamic_cast<NoobToolsAudioProcessor*>(getAudioProcessor());
+                if (proc != nullptr) { juce::AudioBuffer<float> scratch; scratch.setSize (2, 128, false, false, true); proc->processBlock (scratch, buf); }
+            }
         };
     }
     // Zoom buttons
@@ -195,12 +201,19 @@ NoobToolsAudioProcessorEditor::NoobToolsAudioProcessorEditor (NoobToolsAudioProc
     btnZoomOut.onClick = [this]{ zoom = juce::jlimit (1.0f, 64.0f, zoom / 1.25f); if (zoom <= 1.01f) { zoom = 1.0f; offset = 0.0f; } repaint(); };
     // Subtle dark style for utility buttons so pads stand out
     auto dark = juce::Colour::fromRGB (45, 60, 66);
-    for (juce::Button* b : { (juce::Button*)&btnPreview, (juce::Button*)&btnTap, (juce::Button*)&btnExportCsv, (juce::Button*)&btnExportWavs })
+    for (juce::Button* b : { (juce::Button*)&btnPreview, (juce::Button*)&btnTap, (juce::Button*)&btnExportCsv, (juce::Button*)&btnExportWavs, (juce::Button*)&btnEdit, (juce::Button*)&btnQuantize })
         b->setColour (juce::TextButton::buttonColourId, dark);
     // Slice list
     sliceList = std::make_unique<SliceListComponent> (processor);
     sliceViewport.setViewedComponent (sliceList.get(), false);
     addAndMakeVisible (sliceViewport);
+
+    // Edit/Quantize controls
+    addAndMakeVisible (btnEdit);
+    addAndMakeVisible (btnQuantize);
+    btnQuantize.setButtonText ("Quantize");
+    btnEdit.onClick = [this]{ editMode = btnEdit.getToggleState(); sliceViewport.setVisible (editMode); repaint(); };
+    btnQuantize.setToggleState (true, juce::dontSendNotification);
 
     startTimerHz (30);
 }
@@ -256,10 +269,13 @@ void NoobToolsAudioProcessorEditor::paint (juce::Graphics& g) {
     btnChoke.setBounds (right - 80, btnTop, 80, 26); right -= 85;
     btnGate .setBounds (right - 70, btnTop, 70, 26); right -= 75;
     btnSnap.setBounds (right - 100, btnTop, 100, 26); right -= 105;
+    btnQuantize.setBounds (right - 90, btnTop, 90, 26); right -= 95;
+    btnEdit.setBounds (right - 90, btnTop, 90, 26); right -= 95;
     btnTap.setBounds (right - 90, btnTop, 90, 26); right -= 95;
     btnPreview.setBounds (right - 90, btnTop, 90, 26);
     // Slice list viewport overlays the pad area
     sliceViewport.setBounds (pads);
+    sliceViewport.setVisible (false); // hidden until Edit mode
 }
 void NoobToolsAudioProcessorEditor::resized() {}
 void NoobToolsAudioProcessorEditor::drawWaveform (juce::Graphics& g, juce::Rectangle<int> r) {
@@ -465,6 +481,21 @@ bool NoobToolsAudioProcessorEditor::keyPressed (const juce::KeyPress& key) {
             }
             return true;
         }
+    }
+    // Pad keyboard mapping for edit/play
+    const juce::String keyMap = "1234567890qwerty";
+    juce::juce_wchar ch = key.getTextCharacter();
+    int index = keyMap.indexOfChar (ch);
+    if (index >= 0 && index < 16) {
+        int midiNote = 36 + index;
+        if (editMode) {
+            processor.getEngine().createUserSliceAtCurrent (midiNote, btnQuantize.getToggleState());
+        } else {
+            juce::MidiMessage m = juce::MidiMessage::noteOn (1, midiNote, (juce::uint8) 100); juce::MidiBuffer buf; buf.addEvent (m, 0);
+            auto* proc = dynamic_cast<NoobToolsAudioProcessor*>(getAudioProcessor());
+            if (proc != nullptr) { juce::AudioBuffer<float> scratch; scratch.setSize (2, 128, false, false, true); proc->processBlock (scratch, buf); }
+        }
+        return true;
     }
     return false;
 }

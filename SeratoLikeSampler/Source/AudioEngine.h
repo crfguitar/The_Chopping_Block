@@ -78,12 +78,19 @@ public:
         for (const auto meta : midi) {
             const auto m = meta.getMessage();
             if (m.isNoteOn()) {
-                int idx = m.getNoteNumber() - baseNote;
-                if (idx >= 0 && idx < (int) slices.size()) {
-                    const PadSlice& slice = slices[(size_t) idx];
-                    if (slice.endSample <= slice.startSample) continue;
+                int midiNote = m.getNoteNumber();
+                const PadSlice* chosen = nullptr;
+                PadSlice tmpUser;
+                auto it = userSlices.find (midiNote);
+                if (it != userSlices.end()) {
+                    tmpUser = it->second; chosen = &tmpUser;
+                } else {
+                    int idx = midiNote - baseNote;
+                    if (idx >= 0 && idx < (int) slices.size()) chosen = &slices[(size_t) idx];
+                }
+                if (chosen != nullptr && chosen->endSample > chosen->startSample) {
                     if (chokeEnabled) { for (auto& v : voices) if (v.isActive()) v.kill(); }
-                    for (auto& v : voices) { if (! v.isActive()) { v.startNote (pool.getBuffer(), slice); break; } }
+                    for (auto& v : voices) { if (! v.isActive()) { v.startNote (pool.getBuffer(), *chosen); break; } }
                 }
             } else if (m.isNoteOff()) {
                 if (gateEnabled) {
@@ -188,6 +195,7 @@ public:
         if (total <= 0) return 0.0f;
         return (float) juce::jlimit (0, total, previewPos) / (float) total;
     }
+    int getPreviewSamplePosition() const { return juce::jlimit (0, pool.getBuffer().getNumSamples(), previewPos); }
     void setLoopRegionNorm (float a, float b) {
         a = juce::jlimit (0.0f, 1.0f, a); b = juce::jlimit (0.0f, 1.0f, b);
         if (pool.getBuffer().getNumSamples() <= 0) { loopStartSample = 0; loopEndSample = 0; return; }
@@ -213,6 +221,30 @@ public:
         manualTaps.erase (std::unique (manualTaps.begin(), manualTaps.end(), [mg](int a, int b){ return std::abs (a-b) < mg; }), manualTaps.end());
         buildSlices();
     }
+    // Create a user-mapped slice at current preview position, assigned to specific midi note
+    void createUserSliceAtCurrent (int midiNote, bool quantizeToTransient) {
+        const juce::ScopedLock sl (dataLock);
+        if (pool.getBuffer().getNumSamples() == 0) return;
+        int s = juce::jlimit (0, pool.getBuffer().getNumSamples()-1, previewPos);
+        if (quantizeToTransient) {
+            // snap to nearest detected transient using current slicer settings
+            const auto points = slicer.slice (pool.getBuffer(), 0, juce::jmax (8, juce::jmin (maxSlices, 128)));
+            int best = s; int bestD = INT_MAX;
+            for (const auto& pt : points) {
+                int d = std::abs (pt.sampleIndex - s); if (d < bestD) { bestD = d; best = pt.sampleIndex; }
+            }
+            s = best;
+        }
+        // Default length: until next transient or +1s, whichever comes first
+        int e = juce::jmin (pool.getBuffer().getNumSamples(), s + (int) std::round (sr));
+        if (quantizeToTransient) {
+            const auto points = slicer.slice (pool.getBuffer(), 0, juce::jmax (8, juce::jmin (maxSlices, 128)));
+            for (const auto& pt : points) { if (pt.sampleIndex > s) { e = juce::jmax (s + juce::jmax (1, minGapSamples), pt.sampleIndex); break; } }
+        }
+        PadSlice ps; ps.startSample = s; ps.endSample = e; ps.midiNote = midiNote; ps.gainLin = 1.0f;
+        userSlices[midiNote] = ps;
+    }
+    bool hasUserSlice (int midiNote) const { return userSlices.find (midiNote) != userSlices.end(); }
     // Per-slice gain control
     void setSliceGainDb (int index, float gainDb) {
         const juce::ScopedLock sl (dataLock);
@@ -289,7 +321,8 @@ public:
     std::vector<int> manualTaps; int previewPos { 0 }; bool previewPlaying { false }; bool loopPreview { false };
     int loopStartSample { 0 }; int loopEndSample { 0 };
     int minGapSamples { 128 }; float minGapMs { 30.0f };
-    std::map<int, float> gainByStart;
+      std::map<int, float> gainByStart;
+      std::map<int, PadSlice> userSlices; // per-MIDI-note user-assigned slices (Edit mode)
     bool chokeEnabled { false };
     bool gateEnabled { false };
     struct Snapshot { std::vector<PadSlice> slices; std::map<int,float> gainByStart; };
