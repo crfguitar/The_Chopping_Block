@@ -1,5 +1,5 @@
 
-# SeratoLikeSampler (JUCE CMake Starter)
+# Noob_Tools (JUCE CMake Starter)
 
 - Drag/drop audio to load
 - Spectral-flux auto-slice to 16 pads

@@ -1,6 +1,6 @@
 
 cmake_minimum_required(VERSION 3.22)
-project(SeratoLikeSampler VERSION 0.1 LANGUAGES CXX)
+project(Noob_Tools VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,7 +16,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JUCE)
 
-juce_add_plugin(SeratoLikeSampler
+juce_add_plugin(Noob_Tools
     COMPANY_NAME "CRF"
     PLUGIN_MANUFACTURER_CODE CFLT
     PLUGIN_CODE SLSM
@@ -25,12 +25,12 @@ juce_add_plugin(SeratoLikeSampler
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
     COPY_PLUGIN_AFTER_BUILD TRUE
-    PRODUCT_NAME "SeratoLikeSampler"
+    PRODUCT_NAME "Noob_Tools"
 )
 
-juce_generate_juce_header(SeratoLikeSampler)
+juce_generate_juce_header(Noob_Tools)
 
-target_sources(SeratoLikeSampler PRIVATE
+target_sources(Noob_Tools PRIVATE
     Source/PluginProcessor.cpp
     Source/PluginProcessor.h
     Source/PluginEditor.cpp
@@ -61,11 +61,11 @@ if (EXISTS "${PROJECT_RESOURCES_DIR}")
        "${PROJECT_RESOURCES_DIR}/*")
   if (RESOURCE_FILES)
     juce_add_binary_data(SamplerAssets SOURCES ${RESOURCE_FILES})
-    target_link_libraries(SeratoLikeSampler PRIVATE SamplerAssets)
+    target_link_libraries(Noob_Tools PRIVATE SamplerAssets)
   endif()
 endif()
 
-target_compile_definitions(SeratoLikeSampler PRIVATE
+target_compile_definitions(Noob_Tools PRIVATE
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
     JUCE_VST3_CAN_REPLACE_VST2=0
@@ -96,8 +96,8 @@ if (WIN32 AND DEFINED ASIO_SDK_DIR AND EXISTS "${ASIO_SDK_DIR}")
   endforeach()
   if (DEFINED ASIO_SDK_ROOT)
     message(STATUS "ASIO enabled. Using SDK at: ${ASIO_SDK_ROOT}")
-    target_compile_definitions(SeratoLikeSampler PRIVATE JUCE_ASIO=1)
-    target_include_directories(SeratoLikeSampler PRIVATE
+    target_compile_definitions(Noob_Tools PRIVATE JUCE_ASIO=1)
+    target_include_directories(Noob_Tools PRIVATE
       "${ASIO_SDK_ROOT}"
       "${ASIO_SDK_ROOT}/common"
       "${ASIO_SDK_ROOT}/host"
@@ -108,7 +108,7 @@ if (WIN32 AND DEFINED ASIO_SDK_DIR AND EXISTS "${ASIO_SDK_DIR}")
   endif()
 endif()
 
-target_link_libraries(SeratoLikeSampler PRIVATE
+target_link_libraries(Noob_Tools PRIVATE
     juce::juce_audio_utils
     juce::juce_dsp
     juce::juce_gui_extra
@@ -116,45 +116,46 @@ target_link_libraries(SeratoLikeSampler PRIVATE
 
 # Output layout: build/x64/<Config>
 set(OUTPUT_BASE "${CMAKE_BINARY_DIR}/x64/$<CONFIG>")
-if (TARGET SeratoLikeSampler_Standalone)
-  set_target_properties(SeratoLikeSampler_Standalone PROPERTIES
+if (TARGET Noob_Tools_Standalone)
+  set_target_properties(Noob_Tools_Standalone PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE}"
-    OUTPUT_NAME "SeratoLikeSampler"
+    OUTPUT_NAME "Noob_Tools"
   )
 endif()
-if (TARGET SeratoLikeSampler_VST3)
-  set_target_properties(SeratoLikeSampler_VST3 PROPERTIES
+if (TARGET Noob_Tools_VST3)
+  set_target_properties(Noob_Tools_VST3 PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE}/VST3"
     LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_BASE}/VST3"
     ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_BASE}/VST3"
+    OUTPUT_NAME "Noob_Tools"
     VST3_COPY_DIR "${OUTPUT_BASE}/VST3"
   )
 endif()
 
 if (MSVC)
-  target_compile_options(SeratoLikeSampler PRIVATE /W4 /permissive-)
+  target_compile_options(Noob_Tools PRIVATE /W4 /permissive-)
 endif()
 
 # Copy Resources (if present) to Standalone and VST3 outputs
 set(PROJECT_RESOURCES_DIR "${CMAKE_SOURCE_DIR}/Resources")
 if (EXISTS "${PROJECT_RESOURCES_DIR}")
   message(STATUS "Resources found: ${PROJECT_RESOURCES_DIR}")
-  if (TARGET SeratoLikeSampler_Standalone)
-    add_custom_command(TARGET SeratoLikeSampler_Standalone POST_BUILD
+  if (TARGET Noob_Tools_Standalone)
+    add_custom_command(TARGET Noob_Tools_Standalone POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_BASE}/Resources"
       COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_RESOURCES_DIR}" "${OUTPUT_BASE}/Resources"
       COMMENT "Copying Resources to Standalone output")
   endif()
-  if (TARGET SeratoLikeSampler_VST3)
-    add_custom_command(TARGET SeratoLikeSampler_VST3 POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_BASE}/VST3/SeratoLikeSampler.vst3/Contents/Resources"
-      COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_RESOURCES_DIR}" "${OUTPUT_BASE}/VST3/SeratoLikeSampler.vst3/Contents/Resources"
+  if (TARGET Noob_Tools_VST3)
+    add_custom_command(TARGET Noob_Tools_VST3 POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_BASE}/VST3/Noob_Tools.vst3/Contents/Resources"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_RESOURCES_DIR}" "${OUTPUT_BASE}/VST3/Noob_Tools.vst3/Contents/Resources"
       COMMENT "Copying Resources to VST3 bundle")
   endif()
 endif()
 
 include(GNUInstallDirs)
-install(TARGETS SeratoLikeSampler
+install(TARGETS Noob_Tools
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

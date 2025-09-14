@@ -4,8 +4,8 @@
 #include "AudioEngine.h"
 #include "SliceListComponent.h"
 #include "JuceHeader.h"
-SeratoLikeSamplerAudioProcessorEditor::~SeratoLikeSamplerAudioProcessorEditor() { setLookAndFeel (nullptr); }
-SeratoLikeSamplerAudioProcessorEditor::SeratoLikeSamplerAudioProcessorEditor (SeratoLikeSamplerAudioProcessor& p)
+NoobToolsAudioProcessorEditor::~NoobToolsAudioProcessorEditor() { setLookAndFeel (nullptr); }
+NoobToolsAudioProcessorEditor::NoobToolsAudioProcessorEditor (NoobToolsAudioProcessor& p)
     : juce::AudioProcessorEditor (&p), processor (p) {
     using namespace juce;
     setSize (960, 540);
@@ -184,7 +184,7 @@ SeratoLikeSamplerAudioProcessorEditor::SeratoLikeSamplerAudioProcessorEditor (Se
         padButtons[i].setTooltip ("Pad " + juce::String (i + 1) + " — key '" + keyMap.substring (i, i + 1) + "'");
         padButtons[i].onClick = [this, i] {
             juce::MidiMessage m = juce::MidiMessage::noteOn (1, 36 + i, (juce::uint8) 100); juce::MidiBuffer buf; buf.addEvent (m, 0);
-            auto* proc = dynamic_cast<SeratoLikeSamplerAudioProcessor*>(getAudioProcessor());
+            auto* proc = dynamic_cast<NoobToolsAudioProcessor*>(getAudioProcessor());
             if (proc != nullptr) { juce::AudioBuffer<float> scratch; scratch.setSize (2, 128, false, false, true); proc->processBlock (scratch, buf); }
         };
     }
@@ -204,7 +204,7 @@ SeratoLikeSamplerAudioProcessorEditor::SeratoLikeSamplerAudioProcessorEditor (Se
 
     startTimerHz (30);
 }
-void SeratoLikeSamplerAudioProcessorEditor::paint (juce::Graphics& g) {
+void NoobToolsAudioProcessorEditor::paint (juce::Graphics& g) {
     g.fillAll (juce::Colours::black.withBrightness (0.11f));
     auto r = getLocalBounds();
     auto top = r.removeFromTop (40);
@@ -261,8 +261,8 @@ void SeratoLikeSamplerAudioProcessorEditor::paint (juce::Graphics& g) {
     // Slice list viewport overlays the pad area
     sliceViewport.setBounds (pads);
 }
-void SeratoLikeSamplerAudioProcessorEditor::resized() {}
-void SeratoLikeSamplerAudioProcessorEditor::drawWaveform (juce::Graphics& g, juce::Rectangle<int> r) {
+void NoobToolsAudioProcessorEditor::resized() {}
+void NoobToolsAudioProcessorEditor::drawWaveform (juce::Graphics& g, juce::Rectangle<int> r) {
     auto& engine = processor.getEngine(); const auto& wf = engine.getWaveform().get();
     // Background
     g.setColour (juce::Colour::fromRGB (58, 60, 62));
@@ -438,7 +438,7 @@ void SeratoLikeSamplerAudioProcessorEditor::drawWaveform (juce::Graphics& g, juc
     }
 }
 
-bool SeratoLikeSamplerAudioProcessorEditor::keyPressed (const juce::KeyPress& key) {
+bool NoobToolsAudioProcessorEditor::keyPressed (const juce::KeyPress& key) {
     if (key == juce::KeyPress::spaceKey) { processor.getEngine().togglePreview(); return true; }
     if (key.getModifiers().isCommandDown() && (key.getTextCharacter() == 'z' || key.getTextCharacter() == 'Z') && ! key.getModifiers().isShiftDown()) { if (processor.getEngine().undo()) { repaint(); } return true; }
     if ((key.getModifiers().isCommandDown() && (key.getTextCharacter() == 'y' || key.getTextCharacter() == 'Y')) ||
@@ -455,7 +455,7 @@ bool SeratoLikeSamplerAudioProcessorEditor::keyPressed (const juce::KeyPress& ke
         juce::juce_wchar ch = key.getTextCharacter();
         int idx = map.indexOfChar (ch);
         if (idx >= 0) {
-            auto* proc = dynamic_cast<SeratoLikeSamplerAudioProcessor*>(getAudioProcessor());
+            auto* proc = dynamic_cast<NoobToolsAudioProcessor*>(getAudioProcessor());
             if (proc != nullptr) {
                 int base = (int) proc->getAPVTS().getRawParameterValue("basenote")->load();
                 juce::MidiMessage m = juce::MidiMessage::noteOn (1, base + idx, (juce::uint8) 100);
@@ -469,7 +469,7 @@ bool SeratoLikeSamplerAudioProcessorEditor::keyPressed (const juce::KeyPress& ke
     return false;
 }
 
-void SeratoLikeSamplerAudioProcessorEditor::mouseDown (const juce::MouseEvent& e) {
+void NoobToolsAudioProcessorEditor::mouseDown (const juce::MouseEvent& e) {
     if (lastWaveRect.contains (e.getPosition())) {
         lastMouseX = e.x;
         float n = (e.x - lastWaveRect.getX()) / (float) lastWaveRect.getWidth();
@@ -487,7 +487,7 @@ void SeratoLikeSamplerAudioProcessorEditor::mouseDown (const juce::MouseEvent& e
     }
 }
 
-void SeratoLikeSamplerAudioProcessorEditor::mouseDrag (const juce::MouseEvent& e) {
+void NoobToolsAudioProcessorEditor::mouseDrag (const juce::MouseEvent& e) {
     if (draggingLoop && lastWaveRect.contains (e.getPosition())) {
         float n = (e.x - lastWaveRect.getX()) / (float) lastWaveRect.getWidth();
         n = juce::jlimit (0.0f, 1.0f, n);
@@ -513,7 +513,7 @@ void SeratoLikeSamplerAudioProcessorEditor::mouseDrag (const juce::MouseEvent& e
     }
 }
 
-void SeratoLikeSamplerAudioProcessorEditor::mouseUp (const juce::MouseEvent& e) {
+void NoobToolsAudioProcessorEditor::mouseUp (const juce::MouseEvent& e) {
     if (draggingBoundaryIndex >= 1) { draggingBoundaryIndex = -1; repaint(); return; }
     if (draggingLoop) {
         draggingLoop = false;
@@ -558,7 +558,7 @@ void SeratoLikeSamplerAudioProcessorEditor::mouseUp (const juce::MouseEvent& e) 
     }
 }
 
-void SeratoLikeSamplerAudioProcessorEditor::mouseDoubleClick (const juce::MouseEvent& e) {
+void NoobToolsAudioProcessorEditor::mouseDoubleClick (const juce::MouseEvent& e) {
     if (lastWaveRect.contains (e.getPosition())) {
         processor.getEngine().setLoopRegionNorm (0.f, 1.f);
         btnLoop.setToggleState (false, juce::dontSendNotification);
@@ -567,7 +567,7 @@ void SeratoLikeSamplerAudioProcessorEditor::mouseDoubleClick (const juce::MouseE
     }
 }
 
-void SeratoLikeSamplerAudioProcessorEditor::mouseMove (const juce::MouseEvent& e) {
+void NoobToolsAudioProcessorEditor::mouseMove (const juce::MouseEvent& e) {
     lastMouseX = e.x;
     hoverBoundaryIndex = -1;
     if (! lastWaveRect.contains (e.getPosition())) { setMouseCursor (juce::MouseCursor::NormalCursor); return; }
@@ -602,14 +602,14 @@ void SeratoLikeSamplerAudioProcessorEditor::mouseMove (const juce::MouseEvent& e
     if (bestIdx != -1) repaint (lastWaveRect);
 }
 
-bool SeratoLikeSamplerAudioProcessorEditor::isInterestedInFileDrag (const juce::StringArray& files) {
+bool NoobToolsAudioProcessorEditor::isInterestedInFileDrag (const juce::StringArray& files) {
     for (auto& f : files)
         if (f.endsWithIgnoreCase(".wav") || f.endsWithIgnoreCase(".aiff") || f.endsWithIgnoreCase(".mp3") || f.endsWithIgnoreCase(".flac"))
             return true;
     return false;
 }
 
-void SeratoLikeSamplerAudioProcessorEditor::filesDropped (const juce::StringArray& files, int, int) {
+void NoobToolsAudioProcessorEditor::filesDropped (const juce::StringArray& files, int, int) {
     for (auto& path : files) {
         juce::File f (path);
         if (f.existsAsFile()) {

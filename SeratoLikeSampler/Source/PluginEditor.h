@@ -4,12 +4,12 @@
 #include "PluginProcessor.h"
 #include "SamplerLookAndFeel.h"
 class SliceListComponent;
-class SeratoLikeSamplerAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                              public juce::FileDragAndDropTarget,
-                                              public juce::Timer {
+class NoobToolsAudioProcessorEditor  : public juce::AudioProcessorEditor,
+                                          public juce::FileDragAndDropTarget,
+                                          public juce::Timer {
 public:
-    SeratoLikeSamplerAudioProcessorEditor (SeratoLikeSamplerAudioProcessor&);
-    ~SeratoLikeSamplerAudioProcessorEditor() override;
+    NoobToolsAudioProcessorEditor (NoobToolsAudioProcessor&);
+    ~NoobToolsAudioProcessorEditor() override;
     void paint (juce::Graphics&) override;
     void resized() override;
     void timerCallback() override { repaint(); }
@@ -24,7 +24,7 @@ public:
     void filesDropped (const juce::StringArray& files, int x, int y) override;
 private:
     void drawWaveform (juce::Graphics& g, juce::Rectangle<int> r);
-    SeratoLikeSamplerAudioProcessor& processor;
+    NoobToolsAudioProcessor& processor;
     SamplerLookAndFeel lookAndFeel;
     juce::Slider attack, release, cutoff, reso, gain, baseNote, maxSlices, sensitivity, minGapMs;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> aAttack, aRelease, aCutoff, aReso, aGain, aBaseNote, aMaxSlices, aSensitivity, aMinGapMs;
@@ -56,5 +56,5 @@ private:
     int hoverBoundaryIndex { -1 }; // slice index of the boundary being hovered (== start of slice i), i>=1
     int draggingBoundaryIndex { -1 };
     int lastMouseX { -1 };
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SeratoLikeSamplerAudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NoobToolsAudioProcessorEditor)
 };

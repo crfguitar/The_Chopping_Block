@@ -1,15 +1,15 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-SeratoLikeSamplerAudioProcessor::SeratoLikeSamplerAudioProcessor()
+NoobToolsAudioProcessor::NoobToolsAudioProcessor()
     : juce::AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true))
     , apvts (*this, nullptr, "PARAMS", params::createLayout()) {}
-bool SeratoLikeSamplerAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const {
+bool NoobToolsAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const {
     return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo();
 }
-void SeratoLikeSamplerAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
+void NoobToolsAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock) {
     engine.prepare (sampleRate, samplesPerBlock);
 }
-void SeratoLikeSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi) {
+void NoobToolsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi) {
     auto attack  = apvts.getRawParameterValue("attack")->load();
     auto release = apvts.getRawParameterValue("release")->load();
     auto cutoff  = apvts.getRawParameterValue("cutoff")->load();
@@ -31,22 +31,22 @@ void SeratoLikeSamplerAudioProcessor::processBlock (juce::AudioBuffer<float>& bu
     }
     engine.render (buffer, midi);
 }
-void SeratoLikeSamplerAudioProcessor::getStateInformation (juce::MemoryBlock& destData) {
+void NoobToolsAudioProcessor::getStateInformation (juce::MemoryBlock& destData) {
     auto state = apvts.copyState(); std::unique_ptr<juce::XmlElement> xml (state.createXml()); copyXmlToBinary (*xml, destData);
 }
-void SeratoLikeSamplerAudioProcessor::setStateInformation (const void* data, int sizeInBytes) {
+void NoobToolsAudioProcessor::setStateInformation (const void* data, int sizeInBytes) {
     std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
     if (xmlState && xmlState->hasTagName (apvts.state.getType()))
         apvts.replaceState (juce::ValueTree::fromXml (*xmlState));
 }
-bool SeratoLikeSamplerAudioProcessor::isInterestedInFileDrag (const juce::StringArray& files) {
+bool NoobToolsAudioProcessor::isInterestedInFileDrag (const juce::StringArray& files) {
     for (auto& f : files)
         if (f.endsWithIgnoreCase(".wav") || f.endsWithIgnoreCase(".aiff") || f.endsWithIgnoreCase(".mp3") || f.endsWithIgnoreCase(".flac"))
             return true;
     return false;
 }
-void SeratoLikeSamplerAudioProcessor::filesDropped (const juce::StringArray& files, int, int) {
+void NoobToolsAudioProcessor::filesDropped (const juce::StringArray& files, int, int) {
     for (auto& path : files) { juce::File f (path); if (f.existsAsFile()) { if (engine.loadFile (f)) break; } }
 }
-juce::AudioProcessorEditor* SeratoLikeSamplerAudioProcessor::createEditor() { return new SeratoLikeSamplerAudioProcessorEditor (*this); }
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new SeratoLikeSamplerAudioProcessor(); }
+juce::AudioProcessorEditor* NoobToolsAudioProcessor::createEditor() { return new NoobToolsAudioProcessorEditor (*this); }
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() { return new NoobToolsAudioProcessor(); }

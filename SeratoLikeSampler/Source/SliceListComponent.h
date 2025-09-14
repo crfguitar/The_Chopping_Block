@@ -6,7 +6,7 @@
 
 class SliceListComponent : public juce::Component, public juce::Timer {
 public:
-    explicit SliceListComponent (SeratoLikeSamplerAudioProcessor& p) : processor (p) { startTimerHz (10); rebuild(); }
+    explicit SliceListComponent (NoobToolsAudioProcessor& p) : processor (p) { startTimerHz (10); rebuild(); }
     void paint (juce::Graphics& g) override { g.fillAll (juce::Colours::transparentBlack); }
     void resized() override {
         int y = 0; const int rowH = 28; const int pad = 4;
@@ -63,6 +63,6 @@ private:
         setSize (getWidth(), (int) (rows.size() * 28 + 2));
         resized();
     }
-    SeratoLikeSamplerAudioProcessor& processor;
+    NoobToolsAudioProcessor& processor;
     std::vector<Row> rows; size_t lastCount { 0 };
 };
