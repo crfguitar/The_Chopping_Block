@@ -76,8 +76,8 @@ private:
             static const char* names[12] = {"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"};
             int octave = (s.midiNote / 12) - 1; const char* nm = names[s.midiNote % 12];
             rows[i].note->setText (juce::String (nm) + juce::String (octave), juce::dontSendNotification);
-            double sr = engine.getPool().getSampleRate();
-            double st = s.startSample / sr; double en = s.endSample / sr; double du = juce::jmax (0, s.endSample - s.startSample) / sr;
+            double sampleRate = engine.getPool().getSampleRate();
+            double st = s.startSample / sampleRate; double en = s.endSample / sampleRate; double du = juce::jmax (0, s.endSample - s.startSample) / sampleRate;
             rows[i].time->setText (juce::String (st, 3) + "s  ->  " + juce::String (en, 3) + "s  (" + juce::String (du, 3) + "s)", juce::dontSendNotification);
             auto* sl = rows[i].gain.get();
             sl->setRange (-24.0, 24.0, 0.01); sl->setSliderStyle (juce::Slider::LinearBar); sl->setTextBoxStyle (juce::Slider::TextBoxRight, false, 60, 20);
@@ -89,10 +89,10 @@ private:
             sp->setValue (engine.getSlicePitchSemitones ((int) i));
             sp->onValueChange = [idx = (int) i, sp, &engine](){ engine.setSlicePitchSemitones (idx, (float) sp->getValue()); };
             // Time ratio (0.25..4.0)
-            auto* sr = rows[i].ratio.get();
-            sr->setRange (0.25, 4.0, 0.001); sr->setSliderStyle (juce::Slider::LinearBar); sr->setTextBoxStyle (juce::Slider::TextBoxRight, false, 48, 20);
-            sr->setValue (engine.getSliceTimeRatio ((int) i));
-            sr->onValueChange = [idx = (int) i, sr, &engine](){ engine.setSliceTimeRatio (idx, (float) sr->getValue()); };
+            auto* ratioSlider = rows[i].ratio.get();
+            ratioSlider->setRange (0.25, 4.0, 0.001); ratioSlider->setSliderStyle (juce::Slider::LinearBar); ratioSlider->setTextBoxStyle (juce::Slider::TextBoxRight, false, 48, 20);
+            ratioSlider->setValue (engine.getSliceTimeRatio ((int) i));
+            ratioSlider->onValueChange = [idx = (int) i, ratioSlider, &engine](){ engine.setSliceTimeRatio (idx, (float) ratioSlider->getValue()); };
             // Reverse toggle
             auto* rb = rows[i].reverse.get();
             rb->setToggleState (engine.getSliceReverse ((int) i), juce::dontSendNotification);
