@@ -13,8 +13,7 @@
         "USE_SIGNALSMITH": "ON",
         "SIGNALSMITH_USE_PFFFT": "ON",
         "SIGNALSMITH_USE_PFFFT_DOUBLE": "OFF",
-        "SIGNALSMITH_USE_IPP": "OFF",
-        "ASIO_SDK_DIR": "C:/SDKs/ASIOSDK"
+        "SIGNALSMITH_USE_IPP": "OFF"
       }
     },
     {
@@ -32,6 +31,22 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "windows-debug-asio",
+      "displayName": "Windows Debug (Ninja, ASIO)",
+      "inherits": "windows-debug",
+      "cacheVariables": {
+        "ASIO_SDK_DIR": "C:/SDKs/ASIOSDK"
+      }
+    },
+    {
+      "name": "windows-release-asio",
+      "displayName": "Windows Release (Ninja, ASIO)",
+      "inherits": "windows-release",
+      "cacheVariables": {
+        "ASIO_SDK_DIR": "C:/SDKs/ASIOSDK"
+      }
     }
   ],
   "buildPresets": [
@@ -43,6 +58,16 @@
     {
       "name": "build-release",
       "configurePreset": "windows-release",
+      "jobs": 0
+    },
+    {
+      "name": "build-debug-asio",
+      "configurePreset": "windows-debug-asio",
+      "jobs": 0
+    },
+    {
+      "name": "build-release-asio",
+      "configurePreset": "windows-release-asio",
       "jobs": 0
     }
   ]
