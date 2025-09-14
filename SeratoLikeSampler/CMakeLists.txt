@@ -1,0 +1,161 @@
+
+cmake_minimum_required(VERSION 3.22)
+project(SeratoLikeSampler VERSION 0.1 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+option(JUCE_FETCH_VST3_SDK "Automatically fetch the Steinberg VST3 SDK" ON)
+
+include(FetchContent)
+FetchContent_Declare(
+    JUCE
+    GIT_REPOSITORY https://github.com/juce-framework/JUCE.git
+    GIT_TAG 7.0.12
+)
+FetchContent_MakeAvailable(JUCE)
+
+juce_add_plugin(SeratoLikeSampler
+    COMPANY_NAME "CRF"
+    PLUGIN_MANUFACTURER_CODE CFLT
+    PLUGIN_CODE SLSM
+    FORMATS VST3 Standalone
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    COPY_PLUGIN_AFTER_BUILD TRUE
+    PRODUCT_NAME "SeratoLikeSampler"
+)
+
+juce_generate_juce_header(SeratoLikeSampler)
+
+target_sources(SeratoLikeSampler PRIVATE
+    Source/PluginProcessor.cpp
+    Source/PluginProcessor.h
+    Source/PluginEditor.cpp
+    Source/PluginEditor.h
+    Source/AudioEngine.cpp
+    Source/AudioEngine.h
+    Source/PadVoice.cpp
+    Source/PadVoice.h
+    Source/SamplePool.cpp
+    Source/SamplePool.h
+    Source/Slicer.cpp
+    Source/Slicer.h
+    Source/TimeStretch.h
+    Source/WaveformCache.cpp
+    Source/WaveformCache.h
+    Source/Params.h
+    Source/Utilities.h
+    Source/SliceListComponent.h
+    Source/SamplerLookAndFeel.cpp
+    Source/SamplerLookAndFeel.h
+)
+
+# Embed assets from the Resources folder (e.g., logo.png) into the binary
+set(PROJECT_RESOURCES_DIR "${CMAKE_SOURCE_DIR}/Resources")
+if (EXISTS "${PROJECT_RESOURCES_DIR}")
+  file(GLOB_RECURSE RESOURCE_FILES
+       RELATIVE "${CMAKE_SOURCE_DIR}"
+       "${PROJECT_RESOURCES_DIR}/*")
+  if (RESOURCE_FILES)
+    juce_add_binary_data(SamplerAssets SOURCES ${RESOURCE_FILES})
+    target_link_libraries(SeratoLikeSampler PRIVATE SamplerAssets)
+  endif()
+endif()
+
+target_compile_definitions(SeratoLikeSampler PRIVATE
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_VST3_CAN_REPLACE_VST2=0
+    JUCE_MODAL_LOOPS_PERMITTED=1
+    JUCE_REPORT_APP_USAGE=0
+    JUCE_DISPLAY_SPLASH_SCREEN=0
+    JUCE_STRICT_REFCOUNTEDPOINTER=1
+)
+
+# Optional: Enable ASIO on Windows by providing the ASIO SDK location
+# Usage: configure with -DASIO_SDK_DIR="C:/SDKs/ASIOSDK" or set in VS CMake Settings.
+if (WIN32 AND DEFINED ASIO_SDK_DIR AND EXISTS "${ASIO_SDK_DIR}")
+  # Try to resolve the actual ASIO SDK root that contains 'common/asio.h'
+  set(_asio_candidates
+      "${ASIO_SDK_DIR}"
+      "${ASIO_SDK_DIR}/ASIOSDK2"
+      "${ASIO_SDK_DIR}/ASIO"
+      "${ASIO_SDK_DIR}/asiosdk"
+      "${ASIO_SDK_DIR}/vst3sdk/ASIOSDK2"
+      "${ASIO_SDK_DIR}/vst3sdk/ASIO"
+  )
+  unset(ASIO_SDK_ROOT CACHE)
+  foreach(_r IN LISTS _asio_candidates)
+    if (EXISTS "${_r}/common/asio.h")
+      set(ASIO_SDK_ROOT "${_r}" CACHE PATH "Resolved ASIO SDK root")
+      break()
+    endif()
+  endforeach()
+  if (DEFINED ASIO_SDK_ROOT)
+    message(STATUS "ASIO enabled. Using SDK at: ${ASIO_SDK_ROOT}")
+    target_compile_definitions(SeratoLikeSampler PRIVATE JUCE_ASIO=1)
+    target_include_directories(SeratoLikeSampler PRIVATE
+      "${ASIO_SDK_ROOT}"
+      "${ASIO_SDK_ROOT}/common"
+      "${ASIO_SDK_ROOT}/host"
+      "${ASIO_SDK_ROOT}/host/pc"
+    )
+  else()
+    message(STATUS "ASIO_SDK_DIR set ('${ASIO_SDK_DIR}') but 'common/asio.h' not found. ASIO disabled.")
+  endif()
+endif()
+
+target_link_libraries(SeratoLikeSampler PRIVATE
+    juce::juce_audio_utils
+    juce::juce_dsp
+    juce::juce_gui_extra
+)
+
+# Output layout: build/x64/<Config>
+set(OUTPUT_BASE "${CMAKE_BINARY_DIR}/x64/$<CONFIG>")
+if (TARGET SeratoLikeSampler_Standalone)
+  set_target_properties(SeratoLikeSampler_Standalone PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE}"
+    OUTPUT_NAME "SeratoLikeSampler"
+  )
+endif()
+if (TARGET SeratoLikeSampler_VST3)
+  set_target_properties(SeratoLikeSampler_VST3 PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_BASE}/VST3"
+    LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_BASE}/VST3"
+    ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_BASE}/VST3"
+    VST3_COPY_DIR "${OUTPUT_BASE}/VST3"
+  )
+endif()
+
+if (MSVC)
+  target_compile_options(SeratoLikeSampler PRIVATE /W4 /permissive-)
+endif()
+
+# Copy Resources (if present) to Standalone and VST3 outputs
+set(PROJECT_RESOURCES_DIR "${CMAKE_SOURCE_DIR}/Resources")
+if (EXISTS "${PROJECT_RESOURCES_DIR}")
+  message(STATUS "Resources found: ${PROJECT_RESOURCES_DIR}")
+  if (TARGET SeratoLikeSampler_Standalone)
+    add_custom_command(TARGET SeratoLikeSampler_Standalone POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_BASE}/Resources"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_RESOURCES_DIR}" "${OUTPUT_BASE}/Resources"
+      COMMENT "Copying Resources to Standalone output")
+  endif()
+  if (TARGET SeratoLikeSampler_VST3)
+    add_custom_command(TARGET SeratoLikeSampler_VST3 POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E make_directory "${OUTPUT_BASE}/VST3/SeratoLikeSampler.vst3/Contents/Resources"
+      COMMAND ${CMAKE_COMMAND} -E copy_directory "${PROJECT_RESOURCES_DIR}" "${OUTPUT_BASE}/VST3/SeratoLikeSampler.vst3/Contents/Resources"
+      COMMENT "Copying Resources to VST3 bundle")
+  endif()
+endif()
+
+include(GNUInstallDirs)
+install(TARGETS SeratoLikeSampler
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

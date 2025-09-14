@@ -1,0 +1,42 @@
+# JUCE/C++/CMake and IDE artifacts
+
+# JUCE default builds
+Builds/
+build/
+cmake-build-*/
+CMakeBuilds/
+
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.suo
+*.user
+*.VC.db
+*.VC.opendb
+ipch/
+Debug*/
+Release*/
+x64/
+x86/
+*.pdb
+*.ilk
+*.obj
+*.idb
+*.log
+*.tlog
+*.lastbuildstate
+*.cache
+*.pch
+
+# Xcode / macOS
+DerivedData/
+*.xcworkspace/
+*.xcuser*
+*.dSYM
+.DS_Store
+
+# IDEs / OS
+.idea/
+.vscode/
+Thumbs.db
+
