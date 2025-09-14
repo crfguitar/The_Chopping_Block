@@ -226,6 +226,37 @@ public:
         if (index < 0 || index >= (int) slices.size()) return 0.0f;
         return juce::Decibels::gainToDecibels (slices[(size_t) index].gainLin);
     }
+    // Per-slice pitch/time/reverse
+    void setSlicePitchSemitones (int index, float semitones) {
+        const juce::ScopedLock sl (dataLock);
+        if (index < 0 || index >= (int) slices.size()) return;
+        slices[(size_t) index].pitchSemitones = juce::jlimit (-24.0f, 24.0f, semitones);
+    }
+    float getSlicePitchSemitones (int index) const {
+        const juce::ScopedLock sl (dataLock);
+        if (index < 0 || index >= (int) slices.size()) return 0.0f;
+        return slices[(size_t) index].pitchSemitones;
+    }
+    void setSliceTimeRatio (int index, float ratio) {
+        const juce::ScopedLock sl (dataLock);
+        if (index < 0 || index >= (int) slices.size()) return;
+        slices[(size_t) index].timeRatio = juce::jlimit (0.25f, 4.0f, ratio);
+    }
+    float getSliceTimeRatio (int index) const {
+        const juce::ScopedLock sl (dataLock);
+        if (index < 0 || index >= (int) slices.size()) return 1.0f;
+        return slices[(size_t) index].timeRatio;
+    }
+    void setSliceReverse (int index, bool rev) {
+        const juce::ScopedLock sl (dataLock);
+        if (index < 0 || index >= (int) slices.size()) return;
+        slices[(size_t) index].reverse = rev;
+    }
+    bool getSliceReverse (int index) const {
+        const juce::ScopedLock sl (dataLock);
+        if (index < 0 || index >= (int) slices.size()) return false;
+        return slices[(size_t) index].reverse;
+    }
     int getTotalLengthSamples() const { return pool.getBuffer().getNumSamples(); }
     private:
     void buildSlices() {
