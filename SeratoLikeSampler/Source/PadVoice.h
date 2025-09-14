@@ -63,10 +63,9 @@ public:
                 }
                 pos -= toCopy;
             } else {
-                // Forward playback: allow stretcher to process
-                // For now, stretcher is a passthrough. This call sets up future integration.
-                stretcher.process (*source, pos, toCopy, temp);
-                pos += toCopy;
+                // Forward playback: process via stretcher (returns input consumed)
+                int consumed = stretcher.process (*source, pos, toCopy, temp);
+                pos += consumed;
             }
         }
         adsr.applyEnvelopeToBuffer (temp, 0, numSamples);
