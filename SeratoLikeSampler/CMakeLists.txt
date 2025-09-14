@@ -8,6 +8,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 option(JUCE_FETCH_VST3_SDK "Automatically fetch the Steinberg VST3 SDK" ON)
 
+# Time/Pitch and analysis feature flags
+option(USE_SIGNALSMITH "Use SignalSmith time/pitch (header-only)" ON)
+option(USE_RUBBERBAND  "Use Rubber Band library (best quality)" OFF)
+option(USE_AUBIO       "Use Aubio for onset/tempo/key" OFF)
+
 include(FetchContent)
 FetchContent_Declare(
     JUCE
@@ -15,6 +20,17 @@ FetchContent_Declare(
     GIT_TAG 7.0.12
 )
 FetchContent_MakeAvailable(JUCE)
+
+# Optional: SignalSmith (header-only). Pulled at configure time if enabled.
+if (USE_SIGNALSMITH)
+  message(STATUS "SignalSmith stretch enabled")
+  FetchContent_Declare(
+      signalsmith_stretch
+      GIT_REPOSITORY https://github.com/Signalsmith-Audio/signalsmith-stretch.git
+      GIT_TAG main
+  )
+  FetchContent_MakeAvailable(signalsmith_stretch)
+endif()
 
 juce_add_plugin(Noob_Tools
     COMPANY_NAME "CRF"
@@ -51,6 +67,8 @@ target_sources(Noob_Tools PRIVATE
     Source/SliceListComponent.h
     Source/SamplerLookAndFeel.cpp
     Source/SamplerLookAndFeel.h
+    # DSP scaffolding
+    Source/DSP/TimePitch/TimePitchEngine.h
 )
 
 # Embed assets from the Resources folder (e.g., logo.png) into the binary
@@ -75,6 +93,45 @@ target_compile_definitions(Noob_Tools PRIVATE
     JUCE_STRICT_REFCOUNTEDPOINTER=1
 )
 
+# Feature defines for conditional compilation in code
+if (USE_SIGNALSMITH)
+  target_compile_definitions(Noob_Tools PRIVATE USE_SIGNALSMITH=1)
+  # signalsmith-stretch.hpp lives at repo root; add that to include path
+  if (TARGET signalsmith_stretch)
+    # FetchContent_MakeAvailable creates an interface target in some repos; if not, include by source dir
+    # No target is exported here, so include by source dir variable
+    # CMake defines <name>_SOURCE_DIR where <name> is the declaration name
+    # Using a generator expression fallback if variable is not set would be overkill; use explicit variable
+  endif()
+  # Access the populated source dir
+  get_property(_known GLOBAL PROPERTY FETCHCONTENT_SOURCE_DIR_SIGNALS MISSING_VARIABLES)
+  # Best-effort include path: use the variable CMake defines for this content
+  if (DEFINED signalsmith_stretch_SOURCE_DIR)
+    target_include_directories(Noob_Tools PRIVATE ${signalsmith_stretch_SOURCE_DIR})
+  endif()
+endif()
+
+# Optional: Rubber Band via package manager (e.g., vcpkg)
+if (USE_RUBBERBAND)
+  find_package(rubberband CONFIG QUIET)
+  if (rubberband_FOUND)
+    target_link_libraries(Noob_Tools PRIVATE rubberband::rubberband)
+    target_compile_definitions(Noob_Tools PRIVATE USE_RUBBERBAND=1)
+  else()
+    message(STATUS "rubberband not found; set USE_RUBBERBAND=OFF or provide via vcpkg")
+  endif()
+endif()
+
+# Optional: Aubio via package manager
+if (USE_AUBIO)
+  find_package(aubio CONFIG QUIET)
+  if (aubio_FOUND)
+    target_link_libraries(Noob_Tools PRIVATE aubio)
+    target_compile_definitions(Noob_Tools PRIVATE USE_AUBIO=1)
+  else()
+    message(STATUS "aubio not found; set USE_AUBIO=OFF or provide via vcpkg")
+  endif()
+endif()
 # Optional: Enable ASIO on Windows by providing the ASIO SDK location
 # Usage: configure with -DASIO_SDK_DIR="C:/SDKs/ASIOSDK" or set in VS CMake Settings.
 if (WIN32 AND DEFINED ASIO_SDK_DIR AND EXISTS "${ASIO_SDK_DIR}")
