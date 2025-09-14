@@ -13,7 +13,8 @@
         "USE_SIGNALSMITH": "ON",
         "SIGNALSMITH_USE_PFFFT": "ON",
         "SIGNALSMITH_USE_PFFFT_DOUBLE": "OFF",
-        "SIGNALSMITH_USE_IPP": "OFF"
+        "SIGNALSMITH_USE_IPP": "OFF",
+        "ASIO_SDK_DIR": "C:/SDKs/ASIOSDK"
       }
     },
     {
@@ -46,4 +47,3 @@
     }
   ]
 }
-
